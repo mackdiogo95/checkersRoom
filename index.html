@@ -1,0 +1,1018 @@
+<html>
+
+    <head>
+        <title>Checkers Room</title>
+        <style>
+            canvas {
+                width: 100%;
+                height: 100%
+            }
+        </style>
+    </head>
+    <body>
+        <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://threejs.org/build/three.module.js",
+                    "three/addons/": "https://threejs.org/examples/jsm/"
+                }
+            }
+        </script>
+        <script type="module">
+
+            import * as THREE from 'three'
+            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+            import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
+            import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; 
+
+            const scene = new THREE.Scene()
+            //scene.add(new THREE.AxesHelper(5))
+
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight,0.1,500)
+            camera.position.set(50,50,50)
+            camera.lookAt(0,10,0)
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true })
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            renderer.setClearColor(new THREE.Color(0xffffff));
+
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight)
+            document.body.appendChild(renderer.domElement)
+
+            const controls = new OrbitControls(camera, renderer.domElement)
+            camera.lookAt(0, 0, 0);
+
+            createBoard(scene)
+            createOuterLayer(scene)
+            
+
+            const pieceGeometry = new THREE.CylinderGeometry( 1, 1, 0.25, 32 );
+            const whitePieceMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(192, 192, 192)', side: THREE.DoubleSide });
+            const blackPieceMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(64, 64, 64)', side: THREE.DoubleSide });
+
+            placeWhitePieces(scene, pieceGeometry, whitePieceMaterial)
+            placeBlackPieces(scene, pieceGeometry, blackPieceMaterial)
+
+            createTable(scene)
+            placeRoom(scene)
+
+            const ambientLight = new THREE.AmbientLight('rgb(255, 255, 255)', 0.6);
+            scene.add(ambientLight);
+
+            // ***************************** //
+            // Add spotlight (with shadows)
+            // ***************************** //
+
+            const spotLight = new THREE.SpotLight('rgb(255, 255, 255)', 0.1);
+            spotLight.position.set(0, 10, 0);
+            scene.add(spotLight);
+
+            // Setup shadow properties for the spotlight
+            spotLight.castShadow = true;
+            spotLight.shadow.mapSize.width = 2048;
+            spotLight.shadow.mapSize.height = 2048;
+
+            // Give a name to the spot light
+            spotLight.name = "light";
+
+            const loader = new GLTFLoader();
+
+            loader.load( '../office_chair_3.glb', function ( chair1 ) {
+                scene.add( chair1.scene );
+                chair1.scene.position.z = -40
+                chair1.scene.position.x = 10
+                chair1.scene.position.y = -5
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../office_chair_2.glb', function ( chair2 ) {
+                scene.add( chair2.scene );
+                chair2.scene.position.z = 30
+                chair2.scene.position.x = 10
+                chair2.scene.position.y = -8
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../window.glb', function ( window ) {
+                scene.add( window.scene );
+                window.scene.position.z = 122
+                window.scene.position.x = 10
+                window.scene.position.y = 0
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../couch1.glb', function ( couch1 ) {
+                scene.add( couch1.scene );
+                couch1.scene.position.x = -100
+                couch1.scene.position.y = -12
+                couch1.scene.position.z = 0
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../lamp003.glb', function ( lamp003 ) {
+                scene.add( lamp003.scene );
+                lamp003.scene.position.x = 0
+                lamp003.scene.position.y = 60
+                lamp003.scene.position.z = 0
+
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../plants2.glb', function ( plants2 ) {
+                scene.add( plants2.scene );
+                plants2.scene.position.x = 98
+                plants2.scene.position.y = -20
+                plants2.scene.position.z = 90
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            /*
+            loader.load( '../sitting_room_4.glb', function ( sitting_room ) {
+                scene.add( sitting_room.scene );
+                sitting_room.scene.position.x = 95
+                sitting_room.scene.position.y = -10
+                sitting_room.scene.position.z = 0
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+            */
+            
+            loader.load( '../Wall_Shelf.glb', function ( Wall_Shelf ) {
+                scene.add( Wall_Shelf.scene );
+                Wall_Shelf.scene.position.x = 0
+                Wall_Shelf.scene.position.y = 20
+                Wall_Shelf.scene.position.z = -100
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../Sockets-1.glb', function ( Sockets ) {
+                scene.add( Sockets.scene );
+                Sockets.scene.position.x = -120
+                Sockets.scene.position.y = -15
+                Sockets.scene.position.z = -40
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../Sockets-1.glb', function ( Sockets ) {
+                scene.add( Sockets.scene );
+                Sockets.scene.position.x = -120
+                Sockets.scene.position.y = -15
+                Sockets.scene.position.z = 40
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../Japanese_Floor_Lamp_2.glb', function ( Japanese_Floor_Lamp ) {
+                scene.add( Japanese_Floor_Lamp.scene );
+                Japanese_Floor_Lamp.scene.position.x = 110
+                Japanese_Floor_Lamp.scene.position.y = 50
+                Japanese_Floor_Lamp.scene.position.z = -110
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../Carpet.glb', function ( Carpet ) {
+                scene.add( Carpet.scene );
+                Carpet.scene.position.x = 48
+                Carpet.scene.position.y = 48
+                Carpet.scene.position.z = -40
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../floorlamp.glb', function ( floorlamp ) {
+                scene.add( floorlamp.scene );
+                floorlamp.scene.position.x = -110
+                floorlamp.scene.position.y = -20
+                floorlamp.scene.position.z = -107
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../floorlampturned.glb', function ( floorlamp ) {
+                scene.add( floorlamp.scene );
+                floorlamp.scene.position.x = -110
+                floorlamp.scene.position.y = -20
+                floorlamp.scene.position.z = 107
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../wallArt.glb', function ( wallArt ) {
+                scene.add( wallArt.scene );
+                wallArt.scene.position.x = -120
+                wallArt.scene.position.y = 30
+                wallArt.scene.position.z = 0
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+            
+            /*
+            loader.load( '../painting.glb', function ( painting ) {
+                scene.add( painting.scene );
+                painting.scene.position.x = 110
+                painting.scene.position.y = 60
+                painting.scene.position.z = 0
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+            */
+
+            loader.load( '../endTable.glb', function ( endTable ) {
+                scene.add( endTable.scene );
+                endTable.scene.position.x = -110
+                endTable.scene.position.y = -10
+                endTable.scene.position.z = 50
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../endTable.glb', function ( endTable ) {
+                scene.add( endTable.scene );
+                endTable.scene.position.x = -110
+                endTable.scene.position.y = -10
+                endTable.scene.position.z = -57
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+
+            loader.load( '../door4.glb', function ( door1 ) {
+                scene.add( door1.scene );
+                door1.scene.position.x = -20
+                door1.scene.position.y = -20
+                door1.scene.position.z = 122
+            }, undefined, function ( error ) {
+                console.error( error );
+            } );
+            
+            
+            function placeRoom(scene) {
+
+                const floorGeometry = new THREE.BoxGeometry(250,1.2,250)
+                const floorMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(199,203,210)' });
+
+                var floor = createMesh(new THREE.BoxGeometry(250,1.2,250), "floor-wood.jpg");
+                floor.position.set(0,-21,0)
+                floor.receiveShadow = true;
+                scene.add(floor);
+
+
+                const sideWallGeometry = new THREE.BoxGeometry(1.2,125,250)
+                const wallMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(199,203,210)' });
+
+                const rightWall = createMesh(sideWallGeometry, "plaster3.jpeg");
+                rightWall.position.set(125,40,0)
+                scene.add(rightWall)
+
+
+                const leftWall = createMesh(sideWallGeometry, "plaster3.jpeg");
+                leftWall.position.set(-125,40,0)
+                scene.add(leftWall)
+
+                const wallGeometry = new THREE.BoxGeometry(250,125,1.2)
+
+                const backWall1 = createMesh(new THREE.BoxGeometry(140,125,1.2), "plaster3.jpeg");
+                backWall1.position.set(-60,40,125)
+                scene.add(backWall1)
+
+
+                const backWall2 = createMesh(new THREE.BoxGeometry(20,125,1.2), "plaster3.jpeg");
+                backWall2.position.set(120,40,125)
+                scene.add(backWall2)
+
+                const backWall3 = createMesh(new THREE.BoxGeometry(100,25,1.2), "plaster3.jpeg");
+                backWall3.position.set(60,-12.5,125)
+                scene.add(backWall3)
+
+                const backWall4 = createMesh(new THREE.BoxGeometry(100,40,1.2), "plaster3.jpeg");
+                backWall4.position.set(60,89,125)
+                scene.add(backWall4)
+
+                const frontWall = createMesh(wallGeometry, "accent2.jpeg");
+                frontWall.position.set(0,40,-125)
+                scene.add(frontWall)
+
+                const ceilingGeometry = new THREE.BoxGeometry(250,1.2,250)
+                const ceiling = createMesh(floorGeometry, "ceiling.jpeg");
+                ceiling.position.set(0,100,0)
+                scene.add(ceiling)
+
+                const exterior = createMesh(new THREE.BoxGeometry(120,70,1,2), "beach.jpg")
+                exterior.position.set(52,35,127)
+                scene.add(exterior)
+
+                const pointlight = new THREE.PointLight(0xfff59e, 5, 100)
+                pointlight.position.set(100,50,126)
+                pointlight.castShadow = true
+                scene.add(pointlight)
+                pointlight.name = "sun"
+
+                const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.3 )
+                directionalLight.position.set(30,50,126)
+                directionalLight.target = frontWall
+
+                scene.add( directionalLight );
+            }
+
+            function createTable(scene) {
+
+                const tableGeometry = new THREE.BoxGeometry(40,1.2,40)
+                const tableMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(133,94,66)' });
+                const table = createMesh(tableGeometry, "Wood026_2K_Color.jpg");
+                table.position.set(0,-0.87,0)
+                table.receiveShadow = true;
+                scene.add(table)
+
+                const legGeometry = new THREE.BoxGeometry(3,20,3)
+                const legMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(133,94,66)' });
+                const leg1 = createMesh(legGeometry, "Wood026_2K_Color.jpg");
+                leg1.position.set(-18,-11,-18)
+                leg1.receiveShadow = true;
+                scene.add(leg1)
+
+                const leg2 = createMesh(legGeometry, "Wood026_2K_Color.jpg");
+                leg2.position.set(18,-11,18)
+                leg2.receiveShadow = true;
+                scene.add(leg2)
+
+                const leg3 = createMesh(legGeometry, "Wood026_2K_Color.jpg");
+                leg3.position.set(-18,-11,18)
+                leg3.receiveShadow = true;
+                scene.add(leg3)
+
+                const leg4 = createMesh(legGeometry, "Wood026_2K_Color.jpg");
+                leg4.position.set(18,-11,-18)
+                leg4.receiveShadow = true;
+                scene.add(leg4)
+
+            }
+
+            function placeBlackPieces(sceneGraph, pieceGeometry, blackPieceMaterial) {
+                let A1 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                A1.position.set(-8.75, 0.5, -8.75)
+                A1.castShadow = true;
+                sceneGraph.add( A1 );
+
+                let B1 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                B1.position.set(-6.25, 0.5, -8.75)
+                B1.castShadow = true;
+                sceneGraph.add( B1 );
+
+                let C1 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                C1.position.set(-3.75, 0.5, -8.75)
+                C1.castShadow = true;
+                sceneGraph.add( C1 );
+
+                let D1 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                D1.position.set(-1.25, 0.5, -8.75)
+                D1.castShadow = true;
+                sceneGraph.add( D1 );
+
+                let E1 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                E1.position.set(1.25, 0.5, -8.75)
+                E1.castShadow = true;
+                sceneGraph.add( E1 );
+
+                let F1 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                F1.position.set(3.75, 0.5, -8.75)
+                F1.castShadow = true;
+                sceneGraph.add( F1 );
+
+                let G1 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                G1.position.set(6.25, 0.5, -8.75)
+                G1.castShadow = true;
+                sceneGraph.add( G1 );
+
+                let H1 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                H1.position.set(8.75, 0.5, -8.75)
+                H1.castShadow = true;
+                sceneGraph.add( H1 );
+
+                let A2 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                A2.position.set(-8.75, 0.5, -6.25)
+                A2.castShadow = true;
+                sceneGraph.add( A2 );
+
+                let B2 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                B2.position.set(-6.25, 0.5, -6.25)
+                B2.castShadow = true;
+                sceneGraph.add( B2 );
+
+                let C2 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                C2.position.set(-3.75, 0.5, -6.25)
+                C2.castShadow = true;
+                sceneGraph.add( C2 );
+
+                let D2 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                D2.position.set(-1.25, 0.5, -6.25)
+                D2.castShadow = true;
+                sceneGraph.add( D2 );
+
+                let E2 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                E2.position.set(1.25, 0.5, -6.25)
+                E2.castShadow = true;
+                sceneGraph.add( E2 );
+
+                let F2 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                F2.position.set(3.75, 0.5, -6.25)
+                F2.castShadow = true;
+                sceneGraph.add( F2 );
+
+                let G2 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                G2.position.set(6.25, 0.5, -6.25)
+                G2.castShadow = true;
+                sceneGraph.add( G2 );
+
+                let H2 = new THREE.Mesh( pieceGeometry, blackPieceMaterial );
+                H2.position.set(8.75, 0.5, -6.25)
+                H2.castShadow = true;
+                sceneGraph.add( H2 );
+                }
+
+            function placeWhitePieces (sceneGraph, whitePieceGeometry, whitePieceMaterial) {
+                let A8 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                A8.position.set(-8.75, 0.5, 8.75)
+                A8.castShadow = true;
+                sceneGraph.add( A8 );
+
+                let B8 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                B8.position.set(-6.25, 0.5, 8.75)
+                B8.castShadow = true;
+                sceneGraph.add( B8 );
+
+                let C8 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                C8.position.set(-3.75, 0.5, 8.75)
+                C8.castShadow = true;
+                sceneGraph.add( C8 );
+
+                let D8 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                D8.position.set(-1.25, 0.5, 8.75)
+                D8.castShadow = true;
+                sceneGraph.add( D8 );
+
+                let E8 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                E8.position.set(1.25, 0.5, 8.75)
+                E8.castShadow = true;
+                sceneGraph.add( E8 );
+
+                let F8 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                F8.position.set(3.75, 0.5, 8.75)
+                F8.castShadow = true;
+                sceneGraph.add( F8 );
+
+                let G8 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                G8.position.set(6.25, 0.5, 8.75)
+                G8.castShadow = true;
+                sceneGraph.add( G8 );
+
+                let H8 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                H8.position.set(8.75, 0.5, 8.75)
+                H8.castShadow = true;
+                sceneGraph.add( H8 );
+
+                let A7 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                A7.position.set(-8.75, 0.5, 6.25)
+                A7.castShadow = true;
+                sceneGraph.add( A7 );
+
+                let B7 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                B7.position.set(-6.25, 0.5, 6.25)
+                B7.castShadow = true;
+                sceneGraph.add( B7 );
+
+                let C7 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                C7.position.set(-3.75, 0.5, 6.25)
+                C7.castShadow = true;
+                sceneGraph.add( C7 );
+
+                let D7 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                D7.position.set(-1.25, 0.5, 6.25)
+                D7.castShadow = true;
+                sceneGraph.add( D7 );
+
+                let E7 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                E7.position.set(1.25, 0.5, 6.25)
+                E7.castShadow = true;
+                sceneGraph.add( E7 );
+
+                let F7 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                F7.position.set(3.75, 0.5, 6.25)
+                F7.castShadow = true;
+                sceneGraph.add( F7 );
+
+                let G7 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                G7.position.set(6.25, 0.5, 6.25)
+                G7.castShadow = true;
+                sceneGraph.add( G7 );
+
+                let H7 = new THREE.Mesh( whitePieceGeometry, whitePieceMaterial );
+                H7.position.set(8.75, 0.5, 6.25)
+                H7.castShadow = true;
+                sceneGraph.add( H7 );
+            }
+
+            function createBoard(sceneGraph) {
+                let pieceGeometry = new THREE.BoxGeometry(2.5,0.5,2.5)
+                let blackPieceMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(49,34,24)' });
+                let whitePieceMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(205,170,125)' });
+
+                // ************************** //
+                // A
+                // ************************** //
+
+                //let A1 = createMesh(pieceGeometry, "wood-2.jpg")
+                let A1 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                A1.position.set(-8.75,0,-8.75)
+                A1.receiveShadow = true;
+                sceneGraph.add(A1)
+
+                let A2 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                A2.position.set(-8.75,0,-6.25)
+                A2.receiveShadow = true;
+                sceneGraph.add(A2)
+
+                let A3 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                A3.position.set(-8.75,0,-3.75)
+                A3.receiveShadow = true;
+                sceneGraph.add(A3)
+
+                let A4 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                A4.position.set(-8.75,0,-1.25)
+                A4.receiveShadow = true;
+                sceneGraph.add(A4)
+
+                let A5 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                A5.position.set(-8.75,0,1.25)
+                A5.receiveShadow = true;
+                sceneGraph.add(A5)
+
+                let A6 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                A6.position.set(-8.75,0, 3.75)
+                A6.receiveShadow = true;
+                sceneGraph.add(A6)
+
+                let A7 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                A7.position.set(-8.75,0,6.25)
+                A7.receiveShadow = true;
+                sceneGraph.add(A7)
+
+                let A8 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                A8.position.set(-8.75,0,8.75)
+                A8.receiveShadow = true;
+                sceneGraph.add(A8)
+
+
+                // ************************** //
+                // B
+                // ************************** //
+
+                let B1 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                B1.position.set(-6.25,0,-8.75)
+                B1.receiveShadow = true;
+                sceneGraph.add(B1)
+
+                let B2 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                B2.position.set(-6.25,0,-6.25)
+                B2.receiveShadow = true;
+                sceneGraph.add(B2)
+
+                let B3 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                B3.position.set(-6.25,0,-3.75)
+                B3.receiveShadow = true;
+                sceneGraph.add(B3)
+
+                let B4 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                B4.position.set(-6.25,0,-1.25)
+                B4.receiveShadow = true;
+                sceneGraph.add(B4)
+
+                let B5 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                B5.position.set(-6.25,0,1.25)
+                B5.receiveShadow = true;
+                sceneGraph.add(B5)
+
+                let B6 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                B6.position.set(-6.25,0,3.75)
+                B6.receiveShadow = true;
+                sceneGraph.add(B6)
+
+                let B7 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                B7.position.set(-6.25,0,6.25)
+                B7.receiveShadow = true;
+                sceneGraph.add(B7)
+
+                let B8 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                B8.position.set(-6.25,0,8.75)
+                B8.receiveShadow = true;
+                sceneGraph.add(B8)
+
+
+                // ************************** //
+                // C
+                // ************************** //
+
+                let C1 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                C1.position.set(-3.75,0,-8.75)
+                C1.receiveShadow = true;
+                sceneGraph.add(C1)
+
+                let C2 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                C2.position.set(-3.75,0,-6.25)
+                C2.receiveShadow = true;
+                sceneGraph.add(C2)
+
+                let C3 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                C3.position.set(-3.75,0,-3.75)
+                C3.receiveShadow = true;
+                sceneGraph.add(C3)
+
+                let C4 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                C4.position.set(-3.75,0,-1.25)
+                C4.receiveShadow = true;
+                sceneGraph.add(C4)
+
+                let C5 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                C5.position.set(-3.75,0,1.25)
+                C5.receiveShadow = true;
+                sceneGraph.add(C5)
+
+                let C6 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                C6.position.set(-3.75,0, 3.75)
+                C6.receiveShadow = true;
+                sceneGraph.add(C6)
+
+                let C7 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                C7.position.set(-3.75,0,6.25)
+                C7.receiveShadow = true;
+                sceneGraph.add(C7)
+
+                let C8 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                C8.position.set(-3.75,0,8.75)
+                C8.receiveShadow = true;
+                sceneGraph.add(C8)
+
+                // ************************** //
+                // D
+                // ************************** //
+
+                let D1 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                D1.position.set(-1.25,0,-8.75)
+                D1.receiveShadow = true;
+                sceneGraph.add(D1)
+
+                let D2 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                D2.position.set(-1.25,0,-6.25)
+                D2.receiveShadow = true;
+                sceneGraph.add(D2)
+
+                let D3 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                D3.position.set(-1.25,0,-3.75)
+                D3.receiveShadow = true;
+                sceneGraph.add(D3)
+
+                let D4 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                D4.position.set(-1.25,0,-1.25)
+                D4.receiveShadow = true;
+                sceneGraph.add(D4)
+
+                let D5 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                D5.position.set(-1.25,0,1.25)
+                D5.receiveShadow = true;
+                sceneGraph.add(D5)
+
+                let D6 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                D6.position.set(-1.25,0,3.75)
+                D6.receiveShadow = true;
+                sceneGraph.add(D6)
+
+                let D7 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                D7.position.set(-1.25,0,6.25)
+                D7.receiveShadow = true;
+                sceneGraph.add(D7)
+
+                let D8 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                D8.position.set(-1.25,0,8.75)
+                D8.receiveShadow = true;
+                sceneGraph.add(D8)
+
+                // ************************** //
+                // E
+                // ************************** //
+
+                let E1 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                E1.position.set(1.25,0,-8.75)
+                E1.receiveShadow = true;
+                sceneGraph.add(E1)
+
+                let E2 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                E2.position.set(1.25,0,-6.25)
+                E2.receiveShadow = true;
+                sceneGraph.add(E2)
+
+                let E3 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                E3.position.set(1.25,0,-3.75)
+                E3.receiveShadow = true;
+                sceneGraph.add(E3)
+
+                let E4 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                E4.position.set(1.25,0,-1.25)
+                E4.receiveShadow = true;
+                sceneGraph.add(E4)
+
+                let E5 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                E5.position.set(1.25,0,1.25)
+                E5.receiveShadow = true;
+                sceneGraph.add(E5)
+
+                let E6 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                E6.position.set(1.25,0, 3.75)
+                E6.receiveShadow = true;
+                sceneGraph.add(E6)
+
+                let E7 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                E7.position.set(1.25,0,6.25)
+                E7.receiveShadow = true;
+                sceneGraph.add(E7)
+
+                let E8 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                E8.position.set(1.25,0,8.75)
+                E8.receiveShadow = true;
+                sceneGraph.add(E8)
+
+                // ************************** //
+                // F
+                // ************************** //
+
+                let F1 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                F1.position.set(3.75,0,-8.75)
+                F1.receiveShadow = true;
+                sceneGraph.add(F1)
+
+                let F2 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                F2.position.set(3.75,0,-6.25)
+                F2.receiveShadow = true;
+                sceneGraph.add(F2)
+
+                let F3 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                F3.position.set(3.75,0,-3.75)
+                F3.receiveShadow = true;
+                sceneGraph.add(F3)
+
+                let F4 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                F4.position.set(3.75,0,-1.25)
+                F4.receiveShadow = true;
+                sceneGraph.add(F4)
+
+                let F5 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                F5.position.set(3.75,0,1.25)
+                F5.receiveShadow = true;
+                sceneGraph.add(F5)
+
+                let F6 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                F6.position.set(3.75,0,3.75)
+                F6.receiveShadow = true;
+                sceneGraph.add(F6)
+
+                let F7 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                F7.position.set(3.75,0,6.25)
+                F7.receiveShadow = true;
+                sceneGraph.add(F7)
+
+                let F8 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                F8.position.set(3.75,0,8.75)
+                F8.receiveShadow = true;
+                sceneGraph.add(F8)
+
+                // ************************** //
+                // G
+                // ************************** //
+
+                let G1 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                G1.position.set(6.25,0,-8.75)
+                G1.receiveShadow = true;
+                sceneGraph.add(G1)
+
+                let G2 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                G2.position.set(6.25,0,-6.25)
+                G2.receiveShadow = true;
+                sceneGraph.add(G2)
+
+                let G3 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                G3.position.set(6.25,0,-3.75)
+                G3.receiveShadow = true;
+                sceneGraph.add(G3)
+
+                let G4 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                G4.position.set(6.25,0,-1.25)
+                G4.receiveShadow = true;
+                sceneGraph.add(G4)
+
+                let G5 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                G5.position.set(6.25,0,1.25)
+                G5.receiveShadow = true;
+                sceneGraph.add(G5)
+
+                let G6 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                G6.position.set(6.25,0, 3.75)
+                G6.receiveShadow = true;
+                sceneGraph.add(G6)
+
+                let G7 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                G7.position.set(6.25,0,6.25)
+                G7.receiveShadow = true;
+                sceneGraph.add(G7)
+
+                let G8 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                G8.position.set(6.25,0,8.75)
+                G8.receiveShadow = true;
+                sceneGraph.add(G8)
+
+                // ************************** //
+                // H
+                // ************************** //
+
+                let H1 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                H1.position.set(8.75,0,-8.75)
+                H1.receiveShadow = true;
+                sceneGraph.add(H1)
+
+                let H2 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                H2.position.set(8.75,0,-6.25)
+                H2.receiveShadow = true;
+                sceneGraph.add(H2)
+
+                let H3 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                H3.position.set(8.75,0,-3.75)
+                H3.receiveShadow = true;
+                sceneGraph.add(H3)
+
+                let H4 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                H4.position.set(8.75,0,-1.25)
+                H4.receiveShadow = true;
+                sceneGraph.add(H4)
+
+                let H5 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                H5.position.set(8.75,0,1.25)
+                H5.receiveShadow = true;
+                sceneGraph.add(H5)
+
+                let H6 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                H6.position.set(8.75,0,3.75)
+                H6.receiveShadow = true;
+                sceneGraph.add(H6)
+
+                let H7 = new THREE.Mesh(pieceGeometry, blackPieceMaterial);
+                H7.position.set(8.75,0,6.25)
+                H7.receiveShadow = true;
+                sceneGraph.add(H7)
+
+                let H8 = new THREE.Mesh(pieceGeometry, whitePieceMaterial);
+                H8.position.set(8.75,0,8.75)
+                H8.receiveShadow = true;
+                sceneGraph.add(H8)
+            }
+
+            function createOuterLayer(sceneGraph) {
+                const midLayerSidesGeometry = new THREE.BoxGeometry( 0.25, 0.5, 20.5 );
+                const midLayerTopsGeometry = new THREE.BoxGeometry( 20.5, 0.5, 0.25 );
+                const outerLayerSidesGeometry = new THREE.BoxGeometry( 1.5, 1, 23.45 );
+                const outerLayerTopsGeometry = new THREE.BoxGeometry( 23.45, 1, 1.5 );
+                const midLayerMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(205,170,125)' });
+                const outerLayerMaterial = new THREE.MeshPhysicalMaterial({ color: 'rgb(49,34,24)' });
+
+                const midLayerLeft = new THREE.Mesh(midLayerSidesGeometry, midLayerMaterial);
+                midLayerLeft.position.set(-10.125, 0, 0)
+                midLayerLeft.receiveShadow = true;
+                sceneGraph.add(midLayerLeft)
+
+                const midLayerRight = new THREE.Mesh(midLayerSidesGeometry, midLayerMaterial);
+                midLayerRight.position.set(10.125, 0, 0)
+                midLayerRight.receiveShadow = true;
+                sceneGraph.add(midLayerRight)
+
+                const midLayerTop = new THREE.Mesh(midLayerTopsGeometry, midLayerMaterial);
+                midLayerTop.position.set(0, 0, -10.125)
+                midLayerTop.receiveShadow = true;
+                sceneGraph.add(midLayerTop)
+
+                const midLayerBottom = new THREE.Mesh(midLayerTopsGeometry, midLayerMaterial);
+                midLayerBottom.position.set(0, 0, 10.125)
+                midLayerBottom.receiveShadow = true;
+                sceneGraph.add(midLayerBottom)
+
+                const outerLayerLeft = new THREE.Mesh(outerLayerSidesGeometry, outerLayerMaterial);
+                outerLayerLeft.position.set(-11, 0.25, 0)
+                outerLayerLeft.receiveShadow = true;
+                outerLayerLeft.castShadow = true;
+                sceneGraph.add(outerLayerLeft)
+
+                const outerLayerRight = new THREE.Mesh(outerLayerSidesGeometry, outerLayerMaterial);
+                outerLayerRight.position.set(11, 0.25, 0)
+                outerLayerRight.receiveShadow = true;
+                outerLayerRight.castShadow = true;
+                sceneGraph.add(outerLayerRight)
+
+                const outerLayerTop = new THREE.Mesh(outerLayerTopsGeometry, outerLayerMaterial);
+                outerLayerTop.position.set(0, 0.25, -11)
+                outerLayerTop.receiveShadow = true;
+                outerLayerTop.castShadow = true;
+                sceneGraph.add(outerLayerTop)
+
+                const outerLayerBottom = new THREE.Mesh(outerLayerTopsGeometry, outerLayerMaterial);
+                outerLayerBottom.position.set(0, 0.25, 11)
+                outerLayerBottom.receiveShadow = true;
+                outerLayerBottom.castShadow = true;
+                sceneGraph.add(outerLayerBottom)
+
+            }
+
+            function createMesh(geom, imageFile) {
+                var texture = new THREE.TextureLoader().load("../" + imageFile);
+                geom.computeVertexNormals();
+                var mat = new THREE.MeshPhongMaterial();
+                mat.map = texture;
+
+                if (bump) {
+                    var bump = new THREE.TextureLoader().load("../" + bump);
+                    mat.bumpMap = bump;
+                    mat.bumpScale = 0.2;
+                    console.log('d');
+                }
+
+                var mesh = new THREE.Mesh(geom, mat);
+                return mesh;
+            }
+
+
+            window.addEventListener('resize', onWindowResize, false)
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight
+                camera.updateProjectionMatrix()
+                renderer.setSize(window.innerWidth, window.innerHeight)
+                render()
+            }
+
+            var deltaLight = 0.001;
+            var deltaSun = -0.0001;
+            var deltaSunY = -0.00002;
+
+            function computeFrame(time) {
+
+                const light = scene.getObjectByName("light");
+                if (light.position.x >= 10) {
+                    deltaLight *= -1;
+                } else if (light.position.x <= -10) {
+                    deltaLight *= -1;
+                    deltaLight -= 0.0001;
+                }
+                light.translateX(deltaLight);
+
+
+                const sun = scene.getObjectByName("sun")
+                if (sun.position.x <= 15) {
+                    sun.position.x = 100;
+                } else if (sun.position.x > 15) {
+                    sun.translateX(deltaSun);
+
+                }
+
+                if (sun.position.x <= 63 && sun.position.x > 35) {
+                    sun.color.setHex(0xF28C28)
+                    sun.translateY(deltaSunY)
+                } else if (sun.position.x <= 35) {
+                    sun.color.setHex(0xFF5733)
+                    sun.translateY(deltaSunY)
+                } else {
+                    sun.position.y = 50
+                    sun.color.setHex(0xfff59e)
+                }
+
+                requestAnimationFrame(computeFrame);
+            }
+
+            render();
+
+            function render() {
+                requestAnimationFrame(render);
+                renderer.render(scene, camera)
+                requestAnimationFrame(computeFrame);
+
+            }
+        </script>
+    </body>
+</html>
+
+
